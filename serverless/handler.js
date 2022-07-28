@@ -1,3 +1,7 @@
+const AWS = require("aws-sdk");
+var rekognition = new AWS.Rekognition();
+var s3 = new AWS.S3({ params: { Bucket: process.env.BUCKET } });
+
 module.exports.getAllFiles = async (event, context) => {
   let files = [];
 
@@ -31,33 +35,73 @@ module.exports.getAllFiles = async (event, context) => {
   };
 };
 
-module.exports.uploadFile = async (event, context) => {
-  let request = event.body;
-  let jsonData = JSON.parse(request);
-  let base64String = jsonData.base64String;
-  let buffer = Buffer.from(base64String, "base64");
-  let fileMime = fileType(buffer);
-
-  if (fileMime == null) {
-    return context.fail("The string supplied is not a file type.");
-  }
-
-  let file = getFile(fileMime, buffer);
-  //Extract file info in getFile
-  //File.params would have
-  //{'params': params,uploadFile': uploadFile};
-  let params = file.params;
-
-  await s3.putObject(params).promise();
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify(
-      {
-        url: `${file.uploadFile.full_path}`,
-      },
-      null,
-      2
-    ),
+module.exports.uploadFile = (event, context, callback) => {
+  let bucketDetails = {
+    Bucket: process.env.BUCKET /* required */,
+    Prefix: "upload",
   };
+  console.log(JSON.parse(event.body));
+
+  let parsedData = JSON.parse(event.body);
+
+  let encodedImage = parsedData.Image;
+  const filePath = parsedData.name;
+  const imageName = filePath.split("/")[filePath.split("/").length - 1];
+
+  let buf = Buffer.from(encodedImage, "base64");
+  const data = {
+    Key: imageName,
+    Body: buf,
+    ContentEncoding: "base64",
+    ContentType: "image/jpeg",
+  };
+
+  console.log(data);
+  s3.putObject(data, (err, data) => {
+    if (err) {
+      console.log("Error uploading data: ", data);
+      callback(err, null);
+    } else {
+      console.log("success", data);
+      // var params = {
+      //   Image: {
+      //     S3Object: {
+      //       Bucket: bucketDetails.Bucket,
+      //       Name: `${new Date()},${imageName}`,
+      //     },
+      //   },
+      //   MaxLabels: 10,
+      //   MinConfidence: 90,
+      // };
+      // rekognition.detectLabels(params, (err, data) => {
+      //   if (err) {
+      //     console.log("detectLabels", err, err.stack);
+      //     callback(err);
+      //   } else {
+      //     console.log("detectLabels", data);
+      //     callback(null, data);
+      //   }
+      // });
+      var params = {
+        CollectionId: "face-collection",
+        DetectionAttributes: [],
+        ExternalImageId: imageName,
+        Image: {
+          S3Object: {
+            Bucket: bucketDetails.Bucket,
+            Name: `${new Date()},${imageName}`,
+          },
+        },
+      };
+      rekognition.indexFaces(params, function (err, data) {
+        if (err) {
+          console.log("indexFaces", err, err.stack); // an error occurred
+          callback(err);
+        } else {
+          console.log("indexFaces", data); // successful response
+          callback(null, data);
+        }
+      });
+    }
+  });
 };
