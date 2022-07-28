@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
-var rekognition = new AWS.Rekognition();
+var rekognition = new AWS.Rekognition({ region: "us-east-1" });
+
 var s3 = new AWS.S3({ params: { Bucket: process.env.BUCKET } });
 
 module.exports.getAllFiles = async (event, context) => {
@@ -35,6 +36,23 @@ module.exports.getAllFiles = async (event, context) => {
   };
 };
 
+const createCollection = async (collectionName) => {
+  try {
+    console.log(`Creating collection: ${collectionName}`);
+    const data = await rekogClient.send(
+      new CreateCollectionCommand({ CollectionId: collectionName })
+    );
+    console.log("Collection ARN:");
+    console.log(data.CollectionARN);
+    console.log("Status Code:");
+    console.log(String(data.StatusCode));
+    console.log("Success.", data);
+    return data;
+  } catch (err) {
+    console.log("Error", err.stack);
+  }
+};
+
 module.exports.uploadFile = (event, context, callback) => {
   let bucketDetails = {
     Bucket: process.env.BUCKET /* required */,
@@ -46,6 +64,7 @@ module.exports.uploadFile = (event, context, callback) => {
 
   let encodedImage = parsedData.Image;
   const filePath = parsedData.name;
+  const collectionName = parsedData.collectionName;
   const imageName = filePath.split("/")[filePath.split("/").length - 1];
 
   let buf = Buffer.from(encodedImage, "base64");
@@ -57,43 +76,43 @@ module.exports.uploadFile = (event, context, callback) => {
   };
 
   console.log(data);
-  s3.putObject(data, (err, data) => {
+  s3.putObject(data, async (err, data) => {
     if (err) {
       console.log("Error uploading data: ", data);
       callback(err, null);
     } else {
-      console.log("success", data);
-      // var params = {
-      //   Image: {
-      //     S3Object: {
-      //       Bucket: bucketDetails.Bucket,
-      //       Name: `${new Date()},${imageName}`,
-      //     },
+      // console.log("success", data);
+
+      // rekognition.createCollection(
+      //   {
+      //     CollectionId: collectionName,
       //   },
-      //   MaxLabels: 10,
-      //   MinConfidence: 90,
-      // };
-      // rekognition.detectLabels(params, (err, data) => {
-      //   if (err) {
-      //     console.log("detectLabels", err, err.stack);
-      //     callback(err);
-      //   } else {
-      //     console.log("detectLabels", data);
-      //     callback(null, data);
+
+      //   (err, data) => {
+      //     console.log({ responseData: data, error: err });
       //   }
+      // );
+
+      rekognition.listCollections((err, data) => {
+        console.log({ listdata: data, error: err });
+      });
+
+      // console.log({
+      //   collectionName,
+      //   collectionList: collectionList,
       // });
+
       var params = {
-        CollectionId: "face-collection",
-        DetectionAttributes: [],
-        ExternalImageId: imageName,
+        CollectionId: collectionName,
+        ExternalImageId: "pratik",
         Image: {
           S3Object: {
             Bucket: bucketDetails.Bucket,
-            Name: `${new Date()},${imageName}`,
+            Name: imageName,
           },
         },
       };
-      rekognition.indexFaces(params, function (err, data) {
+      rekognition.indexFaces(params, (err, data) => {
         if (err) {
           console.log("indexFaces", err, err.stack); // an error occurred
           callback(err);
@@ -105,3 +124,6 @@ module.exports.uploadFile = (event, context, callback) => {
     }
   });
 };
+
+// module.exports.createCollection = () => {
+// };

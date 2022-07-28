@@ -59,6 +59,7 @@ const App = () => {
         data: {
           Image: image.base64String,
           name: image.capturedImage,
+          collectionName: 'face-collection',
         },
       });
       console.log(response);
@@ -67,44 +68,45 @@ const App = () => {
     }
   };
 
-  const getAllImage = async () => {
-    try {
-      const response = await axios({
-        method: 'post',
-        url: 'https://6urhqmxoyj.execute-api.us-east-1.amazonaws.com/dev/uploadFile',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/x-amz-json-1.1',
-        },
-        data: {
-          Image: image.base64String,
-          name: image.capturedImage,
-        },
-      });
-      console.log(response);
-    } catch (e) {
-      console.log('error', e);
-    }
+  // const getAllImage = async () => {
+  //   try {
+  //     const response = await axios({
+  //       method: 'post',
+  //       url: 'https://6urhqmxoyj.execute-api.us-east-1.amazonaws.com/dev/uploadFile',
+  //       headers: {
+  //         Accept: 'application/json',
+  //         'Content-Type': 'application/x-amz-json-1.1',
+  //       },
+  //       data: {
+  //         Image: image.base64String,
+  //         name: image.capturedImage,
+  //         collectionName: 'face-collection',
+  //       },
+  //     });
+  //     console.log(response);
+  //   } catch (e) {
+  //     console.log('error', e);
+  //   }
 
-    // const apiName = 'Rekognition';
-    // const path = '/storeimage';
-    // const init = {
-    //   headers: {
-    //     Accept: 'application/json',
-    //     'Content-Type': 'application/x-amz-json-1.1',
-    //   },
-    //   data: {
-    //     Image: image.base64String,
-    //     name: image.capturedImage,
-    //   },
-    // };
+  //   // const apiName = 'Rekognition';
+  //   // const path = '/storeimage';
+  //   // const init = {
+  //   //   headers: {
+  //   //     Accept: 'application/json',
+  //   //     'Content-Type': 'application/x-amz-json-1.1',
+  //   //   },
+  //   //   data: {
+  //   //     Image: image.base64String,
+  //   //     name: image.capturedImage,
+  //   //   },
+  //   // };
 
-    // API.post(apiName, path, init)
-    //   .then(response => {
-    //     console.log(response);
-    //   })
-    //   .catch(e => console.log(e));
-  };
+  //   // API.post(apiName, path, init)
+  //   //   .then(response => {
+  //   //     console.log(response);
+  //   //   })
+  //   //   .catch(e => console.log(e));
+  // };
 
   return (
     <View style={styles.container}>
