@@ -59,12 +59,12 @@ provider:
 #    - include-me-dir/**
 
 functions:
-  getAllFiles:
-    handler: handler.getAllFiles
+  findImage:
+    handler: handler.findImage
     events:
       - http:
-          path: /getAllFiles
-          method: get
+          path: /findImage
+          method: post
 
   uploadFile:
     handler: handler.uploadFile

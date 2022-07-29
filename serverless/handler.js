@@ -3,7 +3,7 @@ var rekognition = new AWS.Rekognition({ region: "us-east-1" });
 
 var s3 = new AWS.S3({ params: { Bucket: process.env.BUCKET } });
 
-module.exports.getAllFiles = async (event, context) => {
+module.exports.findImage = async (event, context) => {
   let files = [];
 
   let params = {
@@ -44,6 +44,8 @@ module.exports.uploadFile = (event, context, callback) => {
   const collectionName = parsedData.collectionName;
   const imageName = filePath.split("/")[filePath.split("/").length - 1];
 
+  console.log({ event });
+
   let buf = Buffer.from(encodedImage, "base64");
   const data = {
     Key: imageName,
@@ -52,33 +54,9 @@ module.exports.uploadFile = (event, context, callback) => {
     ContentType: "image/jpeg",
   };
 
-  const traceImageIndex = () => {
-    let bucketDetails = {
-      Bucket: process.env.BUCKET,
-      Prefix: "upload",
-    };
-
-    console.log({ bucketDetails });
-
-    var params = {
-      CollectionId: collectionName,
-      ExternalImageId: "pratik",
-      Image: {
-        S3Object: {
-          Bucket: bucketDetails.Bucket,
-          Name: imageName,
-        },
-      },
-    };
-    rekognition.indexFaces(params, (err, data) => {
-      if (err) {
-        console.log("indexFaces", err, err.stack);
-        callback(err);
-      } else {
-        console.log("indexFaces", data);
-        callback(null, data);
-      }
-    });
+  let bucketDetails = {
+    Bucket: process.env.BUCKET,
+    Prefix: "upload",
   };
 
   s3.putObject(data, async (err, data) => {
@@ -94,8 +72,27 @@ module.exports.uploadFile = (event, context, callback) => {
       rekognition.createCollection(
         { CollectionId: collectionName },
         (err, data) => {
-          traceImageIndex();
           console.log({ err, data });
+
+          var params = {
+            CollectionId: collectionName,
+            ExternalImageId: "pratik",
+            Image: {
+              S3Object: {
+                Bucket: bucketDetails.Bucket,
+                Name: imageName,
+              },
+            },
+          };
+          rekognition.indexFaces(params, (err, data) => {
+            if (err) {
+              console.log("indexFaces", err, err.stack);
+              callback(err);
+            } else {
+              console.log("indexFaces", data.FaceRecords[0]?.Face);
+              callback(null, data);
+            }
+          });
         }
       );
     }

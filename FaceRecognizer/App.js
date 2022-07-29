@@ -11,19 +11,6 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import axios from 'axios';
 import Amplify, {API} from 'aws-amplify';
 
-// Amplify configuration for API-Gateway
-Amplify.configure({
-  API: {
-    endpoints: [
-      {
-        name: 'Rekognition', //your api name
-        endpoint:
-          'https://6urhqmxoyj.execute-api.us-east-1.amazonaws.com/dev/uploadFile', //Your Endpoint URL
-      },
-    ],
-  },
-});
-
 const App = () => {
   const [image, setImage] = useState({
     capturedImage: '',
@@ -68,45 +55,26 @@ const App = () => {
     }
   };
 
-  // const getAllImage = async () => {
-  //   try {
-  //     const response = await axios({
-  //       method: 'post',
-  //       url: 'https://6urhqmxoyj.execute-api.us-east-1.amazonaws.com/dev/uploadFile',
-  //       headers: {
-  //         Accept: 'application/json',
-  //         'Content-Type': 'application/x-amz-json-1.1',
-  //       },
-  //       data: {
-  //         Image: image.base64String,
-  //         name: image.capturedImage,
-  //         collectionName: 'face-collection',
-  //       },
-  //     });
-  //     console.log(response);
-  //   } catch (e) {
-  //     console.log('error', e);
-  //   }
-
-  //   // const apiName = 'Rekognition';
-  //   // const path = '/storeimage';
-  //   // const init = {
-  //   //   headers: {
-  //   //     Accept: 'application/json',
-  //   //     'Content-Type': 'application/x-amz-json-1.1',
-  //   //   },
-  //   //   data: {
-  //   //     Image: image.base64String,
-  //   //     name: image.capturedImage,
-  //   //   },
-  //   // };
-
-  //   // API.post(apiName, path, init)
-  //   //   .then(response => {
-  //   //     console.log(response);
-  //   //   })
-  //   //   .catch(e => console.log(e));
-  // };
+  const findImage = async () => {
+    try {
+      const response = await axios({
+        method: 'post',
+        url: 'https://6urhqmxoyj.execute-api.us-east-1.amazonaws.com/dev/findImage',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/x-amz-json-1.1',
+        },
+        body: {
+          Image: image.base64String,
+          name: image.capturedImage,
+          collectionName: 'face1',
+        },
+      });
+      console.log(response);
+    } catch (e) {
+      console.log('error', e);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -125,11 +93,17 @@ const App = () => {
         }}
       />
       {!!image.base64String && (
-        <TouchableOpacity
-          style={styles.buttonContainer}
-          onPress={registerImage}>
-          <Text style={{color: 'white'}}>Register Image</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity
+            style={styles.buttonContainer}
+            onPress={registerImage}>
+            <Text style={{color: 'white'}}>Register Image</Text>
+          </TouchableOpacity>
+          <View style={{height: 10}} />
+          <TouchableOpacity style={styles.buttonContainer} onPress={findImage}>
+            <Text style={{color: 'white'}}>Find Image</Text>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
