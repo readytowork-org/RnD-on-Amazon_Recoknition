@@ -59,7 +59,7 @@ const App = () => {
         data: {
           Image: image.base64String,
           name: image.capturedImage,
-          collectionName: 'face-collection',
+          collectionName: 'face1',
         },
       });
       console.log(response);
